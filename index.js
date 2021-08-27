@@ -83,120 +83,136 @@ const _getOTP = (phone, orderID) => {
 };
 
 setImmediate(async () => {
-	const deviceID = randomDeviceId();
-
-	const fullName = `${randomFirstName()} ${randomName()}`;
-
-	const userName = normalizeName(fullName) + randomDate().replace(/\//gim, '');
-
-	const { email } = await generateMail({ name: userName.slice(0, 15) });
-
-	// const email = await textQuestion({ question: 'Nhập email' });
-
-	// const mobile = randomPhone();
-
-	const { raw, mobile, orderID } = await _getPhone();
-
-	const password = 'Pa55w0rds';
-
-	const refCode = 'KSQYL749';
-
-	const proxy = randomProxy();
-
-	const fbToken = randomDeviceId().toLowerCase();
-
-	const { ip } = await getIp({ proxy });
-
-	console.log({ mobile, orderID, deviceID, email, fullName, ip, fbToken });
-
-	let response = await register({
-		deviceID,
-		email,
-		fullName,
-		mobile,
-		password,
-		refCode,
-		proxy,
-	});
-
-	const {
-		data: { token: registerToken },
-	} = response;
-
-	console.log({ registerToken });
-
-	let otp = '';
-
 	while (true) {
-		console.log('Fetching messages...');
+		try {
+			const deviceID = randomDeviceId();
 
-		response = await fetchMessage({ email });
+			const fullName = `${randomFirstName()} ${randomName()}`;
 
-		const subjectString = response.map((message) => message.subject).join('');
+			const userName =
+				normalizeName(fullName) + randomDate().replace(/\//gim, '');
 
-		if (/[0-9]{4}/gim.test(subjectString)) {
-			otp = subjectString.match(/[0-9]{4}/gim)[0];
+			const { email } = await generateMail({ name: userName.slice(0, 15) });
 
-			break;
+			// const email = await textQuestion({ question: 'Nhập email' });
+
+			// const mobile = randomPhone();
+
+			const { raw, mobile, orderID } = await _getPhone();
+
+			const password = 'Pa55w0rds';
+
+			const refCode = 'KSQYL749';
+
+			const proxy = randomProxy();
+
+			const fbToken = randomDeviceId().toLowerCase();
+
+			const { ip } = await getIp({ proxy });
+
+			console.log({ mobile, orderID, deviceID, email, fullName, ip, fbToken });
+
+			let response = await register({
+				deviceID,
+				email,
+				fullName,
+				mobile,
+				password,
+				refCode,
+				proxy,
+			});
+
+			const {
+				data: { token: registerToken },
+			} = response;
+
+			console.log({ registerToken });
+
+			let otp = '';
+
+			while (true) {
+				console.log('Fetching messages...');
+
+				response = await fetchMessage({ email });
+
+				const subjectString = response
+					.map((message) => message.subject)
+					.join('');
+
+				if (/[0-9]{4}/gim.test(subjectString)) {
+					otp = subjectString.match(/[0-9]{4}/gim)[0];
+
+					break;
+				}
+			}
+
+			// const otp = await textQuestion({ question: 'Nhập OTP' });
+
+			console.log({ otp });
+
+			response = await verifyOtp({ otp, registerToken, proxy });
+
+			console.log(response);
+
+			response = await login({ email, deviceID, password, proxy });
+
+			const {
+				data: { token },
+			} = response;
+
+			console.log({ token });
+
+			response = await signToken({ token, deviceID, fbToken, proxy });
+
+			console.log(response);
+
+			response = await cashbackStep({ proxy });
+
+			response = await countNotify({ token, proxy });
+
+			console.log(response);
+
+			response = await userInfo({ token, proxy });
+
+			console.log(response);
+
+			response = await infoHomepage({ proxy, deviceID });
+
+			response = await countOrderNotExchange({ proxy, token });
+
+			response = await countNotify({ token, proxy });
+
+			console.log(response);
+
+			response = await refferalExchange({ token, proxy });
+
+			console.log(response);
+
+			response = await resendVerify({ token, phone: raw, proxy });
+
+			console.log(response);
+
+			const otpPhone = await _getOTP(raw, orderID);
+
+			console.log({ otpPhone });
+
+			response = await verifyOtpPhone({
+				phone: raw,
+				proxy,
+				token,
+				otp: otpPhone,
+			});
+
+			console.log(response);
+
+			require('fs').appendFileSync(
+				'accounts.txt',
+				`${mobile}|${email}|${password}|${deviceID}|${ip}\n`
+			);
+		} catch (error) {
+			console.log(error.message || error);
+
+			continue;
 		}
 	}
-
-	// const otp = await textQuestion({ question: 'Nhập OTP' });
-
-	console.log({ otp });
-
-	response = await verifyOtp({ otp, registerToken, proxy });
-
-	console.log(response);
-
-	response = await login({ email, deviceID, password, proxy });
-
-	const {
-		data: { token },
-	} = response;
-
-	console.log({ token });
-
-	response = await signToken({ token, deviceID, fbToken, proxy });
-
-	console.log(response);
-
-	response = await cashbackStep({ proxy });
-
-	response = await countNotify({ token, proxy });
-
-	console.log(response);
-
-	response = await userInfo({ token, proxy });
-
-	console.log(response);
-
-	response = await infoHomepage({ proxy, deviceID });
-
-	response = await countOrderNotExchange({ proxy, token });
-
-	response = await countNotify({ token, proxy });
-
-	console.log(response);
-
-	response = await refferalExchange({ token, proxy });
-
-	console.log(response);
-
-	response = await resendVerify({ token, phone: raw, proxy });
-
-	console.log(response);
-
-	const otpPhone = await _getOTP(raw, orderID);
-
-	console.log({ otpPhone });
-
-	response = await verifyOtpPhone({ phone: raw, proxy, token, otp: otpPhone });
-
-	console.log(response);
-
-	require('fs').appendFileSync(
-		'accounts.txt',
-		`${mobile}|${email}|${password}|${deviceID}|${ip}\n`
-	);
 });

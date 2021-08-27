@@ -1,6 +1,9 @@
 const axios = require('axios');
+const { randomIPHeader } = require('../random');
 
 module.exports = async ({ email }) => {
+	const ipHeader = randomIPHeader();
+
 	const headers = {
 		authority: 'api.internal.temp-mail.io',
 		'sec-ch-ua':
@@ -17,8 +20,7 @@ module.exports = async ({ email }) => {
 		'sec-fetch-dest': 'empty',
 		referer: 'https://temp-mail.io/',
 		'accept-language': 'en-US,en;q=0.9,vi;q=0.8,zh-CN;q=0.7,zh;q=0.6',
-		cookie:
-			'_ga=GA1.2.1397599029.1626323917; __gads=ID=581c3afb3db1d322-2254b9345aca00c2:T=1626323921:RT=1626323921:S=ALNI_MbxpAIbRDHd34zkDVEzS0E7bmgd1w; _gid=GA1.2.2051030648.1629812641; _gat=1',
+		...ipHeader,
 	};
 
 	const options = {
